@@ -1,4 +1,4 @@
-# CppFlakeTemplate
+# LittleLispParser
 
 Nix flake + Direnv + CMake.
 

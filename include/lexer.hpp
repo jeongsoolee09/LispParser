@@ -9,6 +9,10 @@ struct Symbol {
   std::string value;
 };
 
+inline bool operator==(const Symbol &lhs, const Symbol &rhs) {
+  return lhs.value == rhs.value;
+}
+
 using LispToken = std::variant<Keyword, Symbol>;
 
 // v inline is a suggestion

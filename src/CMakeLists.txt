@@ -1,1 +1,1 @@
-target_sources(LittleLispParserLib PRIVATE main.cpp lib.cpp lexer.cpp)
+target_sources(LittleLispParserLib PRIVATE main.cpp lexer.cpp)

@@ -38,21 +38,21 @@ TEST_F(LexerTest, Cond) {
   EXPECT_EQ(result, expected_result);
 }
 
-TEST_F(LexerTest, CAR) {
+TEST_F(LexerTest, Car) {
   std::vector<LispToken> result = lex("(car a b)");
   auto expected_result = std::vector<LispToken>{
       Keyword::LPAREN, Keyword::CAR, Symbol("a"), Symbol("b"), Keyword::RPAREN};
   EXPECT_EQ(result, expected_result);
 }
 
-TEST_F(LexerTest, CDR) {
+TEST_F(LexerTest, Cdr) {
   std::vector<LispToken> result = lex("(cdr a b)");
   auto expected_result = std::vector<LispToken>{
       Keyword::LPAREN, Keyword::CDR, Symbol("a"), Symbol("b"), Keyword::RPAREN};
   EXPECT_EQ(result, expected_result);
 }
 
-TEST_F(LexerTest, CONS) {
+TEST_F(LexerTest, Cons) {
   std::vector<LispToken> result = lex("(cons a (b c))");
   auto expected_result = std::vector<LispToken>{
       Keyword::LPAREN, Keyword::CONS, Symbol("a"),     Keyword::LPAREN,

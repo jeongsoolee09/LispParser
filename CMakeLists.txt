@@ -9,3 +9,5 @@ target_include_directories(LittleLispParserLib PUBLIC include)
 add_executable(LittleLispParser src/main.cpp)
 target_link_libraries(LittleLispParser PRIVATE LittleLispParserLib)
 
+enable_testing()
+add_subdirectory(test)

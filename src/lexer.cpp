@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <cctype>
 #include <cstddef>
-#include <iostream>
 #include <iterator>
 
 // struct iterator {

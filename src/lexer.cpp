@@ -1,6 +1,7 @@
 #include "lexer.hpp"
 #include <algorithm>
 #include <cctype>
+#include <cstddef>
 #include <iostream>
 #include <iterator>
 
@@ -74,11 +75,9 @@ std::vector<LispToken> lex(std::string_view source) {
         return !std::isalnum(character);
       });
       std::ptrdiff_t distance = std::distance(it, occurrence);
-      std::cout << "current_char: " << *it
-                << ", occurring char: " << *occurrence
-                << ", distance: " << distance << "\n";
-      std::string value(&*it, distance);
-      result.emplace_back(Symbol(value));
+			distance = std::max<std::ptrdiff_t>(1, distance);
+      std::string token_value(&*it, distance);
+      result.emplace_back(Symbol(token_value));
       it += distance - 1;
       break;
     }

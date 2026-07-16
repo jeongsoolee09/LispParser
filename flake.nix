@@ -27,6 +27,7 @@
           buildInputs = with pkgs; [
             boost
             fmt
+            gtest
           ];
 
           CMAKE_EXPORT_COMPILE_COMMANDS = "ON";

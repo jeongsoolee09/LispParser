@@ -14,4 +14,5 @@ target_compile_features(LittleLispParserTest PRIVATE cxx_std_20)
 
 gtest_discover_tests(LittleLispParserTest
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
 )

@@ -20,7 +20,8 @@ TEST_F(LexerTest, EmptyList) {
 
 TEST_F(LexerTest, NonAlnumSingleChar) {
   std::vector<LispToken> result = lex("!");
-  EXPECT_EQ(result, Symbol("!"));
+  std::vector<LispToken> expected_result{Symbol("!")};
+  EXPECT_EQ(result, expected_result);
 }
 
 TEST_F(LexerTest, Quote) {

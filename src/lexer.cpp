@@ -1,20 +1,40 @@
+// #ifdef NDEBUG
+// std::cout << ...
+// #endif
 #include "lexer.hpp"
 #include <algorithm>
 #include <cctype>
 #include <cstddef>
-#include <iterator>
+#include <unordered_map>
 
-// struct iterator {
-// 	T* current_item;
-// }
+#include <glog/logging.h>
 
-// vectors are contiguous piece of memory.
-// when it grows, it may get realloced to a different location
+namespace {
 
-// If the input is not null-terminated, then it would cause an
-// undefined behavior if that happen to start with one of the
-// characters listed in the switch case.
-// e.g. "q".
+bool is_whitespace(char character) {
+  return character == ' ' || character == '\n' || character == '\t';
+}
+
+bool is_delimiter(char character) {
+  return character == '(' || character == ')';
+}
+
+/**
+ * A map from a string to a keyword. If lookup on the table fails, it means
+ * the string in question is not a keyword.
+ */
+const std::unordered_map<std::string_view, KeywordSymbol> keyword_table = {
+    {"quote", KeywordSymbol::QUOTE}, {"atom", KeywordSymbol::ATOM},
+    {"eq", KeywordSymbol::EQ},       {"car", KeywordSymbol::CAR},
+    {"cdr", KeywordSymbol::CDR},     {"cons", KeywordSymbol::CONS},
+    {"cond", KeywordSymbol::COND},
+};
+
+bool is_keyword_symbol(std::string_view symbol) {
+  return keyword_table.find(symbol) != keyword_table.cend();
+}
+} // namespace
+
 std::vector<LispToken> lex(std::string_view source) {
   std::vector<LispToken> result;
   auto it = source.cbegin();
@@ -22,72 +42,46 @@ std::vector<LispToken> lex(std::string_view source) {
     char character = *it;
     switch (character) {
     case '(':
-      result.emplace_back(Keyword::LPAREN);
+      result.emplace_back(Delimiter::LPAREN);
       break;
     case ')':
-      result.emplace_back(Keyword::RPAREN);
+      result.emplace_back(Delimiter::RPAREN);
       break;
-    case 'q': // We might be in "quote"
-      if (*(it + 1) == 'u' && *(it + 2) == 'o' && *(it + 3) == 't' &&
-          *(it + 4) == 'e') {
-        result.emplace_back(Keyword::QUOTE);
-        it += 4;
-        break;
-      }
-    case 'c': // We might be in "car" / "cdr" / "cons" / "cond"
-      if (*(it + 1) == 'a' && *(it + 2) == 'r') {
-        result.emplace_back(Keyword::CAR);
-        it += 2;
-        break;
-      }
-
-      if (*(it + 1) == 'd' && *(it + 2) == 'r') {
-        result.emplace_back(Keyword::CDR);
-        it += 2;
-        break;
-      }
-
-      if (*(it + 1) == 'o' && *(it + 2) == 'n') {
-        if (*(it + 3) == 's') {
-          result.emplace_back(Keyword::CONS);
-          it += 3;
-          break;
-        }
-        if (*(it + 3) == 'd') {
-          result.emplace_back(Keyword::COND);
-          it += 3;
-          break;
-        }
-      }
-    case 'e':
-      if (*(it + 1) == 'q') {
-        result.emplace_back(Keyword::EQ);
-        it += 1;
-        break;
-      }
+    case '"': {
+      ++it; // Take off the `"` in the front
+      auto occurrence = std::find_if(
+          it, source.cend(), [](char character) { return character == '"'; });
+      std::ptrdiff_t distance = std::distance(it, occurrence);
+      std::ptrdiff_t adjusted_distance = std::max<std::ptrdiff_t>(1, distance);
+      std::string token_value(&*it, adjusted_distance);
+      result.emplace_back(StringLiteral(token_value));
+      it += distance;
+      break;
+    }
     case ' ':
     case '\n':
     case '\t':
       continue; // ignore all whitespaces
-    default:    // very likely a symbol
+    default: {  // very likely a symbol
       auto occurrence = std::find_if(it, source.cend(), [](char character) {
-        return !std::isalnum(character);
+        return is_whitespace(character) || is_delimiter(character);
       });
       std::ptrdiff_t distance = std::distance(it, occurrence);
-			distance = std::max<std::ptrdiff_t>(1, distance);
+      DLOG(INFO) << "current_char: " << *it
+                 << ", occurring char: " << *occurrence
+                 << ", distance: " << distance << "\n";
+      distance = std::max<std::ptrdiff_t>(1, distance);
       std::string token_value(&*it, distance);
-      result.emplace_back(Symbol(token_value));
+      /* Check if it's a keyword by looking it up on the table */
+      if (is_keyword_symbol(token_value)) {
+        result.emplace_back(from_string(token_value).value());
+      } else {
+        result.emplace_back(UserSymbol(token_value));
+      }
       it += distance - 1;
       break;
+    }
     }
   }
   return result;
 }
-
-// No overlaps
-// q -> u ->
-
-// Overlapping chars
-// c -> a -> r
-//   -> d -> r
-// ...

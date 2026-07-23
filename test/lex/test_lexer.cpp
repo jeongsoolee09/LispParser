@@ -14,50 +14,60 @@ TEST_F(LexerTest, EmptyInput) {
 TEST_F(LexerTest, EmptyList) {
   std::vector<LispToken> result = lex("()");
   auto expected_result =
-      std::vector<LispToken>({Keyword::LPAREN, Keyword::RPAREN});
+      std::vector<LispToken>({Delimiter::LPAREN, Delimiter::RPAREN});
   EXPECT_EQ(result, expected_result);
 }
 
 TEST_F(LexerTest, NonAlnumSingleChar) {
   std::vector<LispToken> result = lex("!");
-  std::vector<LispToken> expected_result{Symbol("!")};
+  std::vector<LispToken> expected_result{UserSymbol("!")};
   EXPECT_EQ(result, expected_result);
 }
 
 TEST_F(LexerTest, Quote) {
   std::vector<LispToken> result = lex("(quote car)");
-  auto expected_result = std::vector<LispToken>{Keyword::LPAREN, Keyword::QUOTE,
-                                                Keyword::CAR, Keyword::RPAREN};
+  auto expected_result =
+      std::vector<LispToken>{Delimiter::LPAREN, KeywordSymbol::QUOTE,
+                             KeywordSymbol::CAR, Delimiter::RPAREN};
   EXPECT_EQ(result, expected_result);
 }
 
 TEST_F(LexerTest, Cond) {
   std::vector<LispToken> result = lex("(cond a b)");
-  auto expected_result =
-      std::vector<LispToken>{Keyword::LPAREN, Keyword::COND, Symbol("a"),
-                             Symbol("b"), Keyword::RPAREN};
+  auto expected_result = std::vector<LispToken>{
+      Delimiter::LPAREN, KeywordSymbol::COND, UserSymbol("a"), UserSymbol("b"),
+      Delimiter::RPAREN};
   EXPECT_EQ(result, expected_result);
 }
 
 TEST_F(LexerTest, Car) {
   std::vector<LispToken> result = lex("(car a b)");
   auto expected_result = std::vector<LispToken>{
-      Keyword::LPAREN, Keyword::CAR, Symbol("a"), Symbol("b"), Keyword::RPAREN};
+      Delimiter::LPAREN, KeywordSymbol::CAR, UserSymbol("a"), UserSymbol("b"),
+      Delimiter::RPAREN};
   EXPECT_EQ(result, expected_result);
 }
 
 TEST_F(LexerTest, Cdr) {
   std::vector<LispToken> result = lex("(cdr a b)");
   auto expected_result = std::vector<LispToken>{
-      Keyword::LPAREN, Keyword::CDR, Symbol("a"), Symbol("b"), Keyword::RPAREN};
+      Delimiter::LPAREN, KeywordSymbol::CDR, UserSymbol("a"), UserSymbol("b"),
+      Delimiter::RPAREN};
   EXPECT_EQ(result, expected_result);
 }
 
 TEST_F(LexerTest, Cons) {
   std::vector<LispToken> result = lex("(cons a (b c))");
   auto expected_result = std::vector<LispToken>{
-      Keyword::LPAREN, Keyword::CONS, Symbol("a"),     Keyword::LPAREN,
-      Symbol("b"),     Symbol("c"),   Keyword::RPAREN, Keyword::RPAREN};
+      Delimiter::LPAREN, KeywordSymbol::CONS, UserSymbol("a"),
+      Delimiter::LPAREN, UserSymbol("b"),     UserSymbol("c"),
+      Delimiter::RPAREN, Delimiter::RPAREN};
+  EXPECT_EQ(result, expected_result);
+}
+
+TEST_F(LexerTest, StringLiteral) {
+  std::vector<LispToken> result = lex("\"hi\"");
+  auto expected_result = std::vector<LispToken>{StringLiteral("hi")};
   EXPECT_EQ(result, expected_result);
 }
 } // namespace

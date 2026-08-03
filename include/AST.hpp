@@ -1,20 +1,37 @@
-class Quote {};
+#ifndef LITTLELISPPARSER_AST
+#define LITTLELISPPARSER_AST
 
-class Atom {};
+#include "token.hpp"
+#include <variant>
+#include <vector>
 
-class Eq {};
+struct SymbolNode {
+  const Symbol* token;
+};
 
-class Car {};
+struct LiteralNode {
+  const Literal* token;
+};
 
-class Cdr {};
+using Atom = std::variant<SymbolNode, LiteralNode>;
 
-class Cons {};
+// struct List {}; // (a b c) (a) (a (b c (d e)))
 
-class Cond {};
+struct Node;
 
-class Symbol {}; // a b c
+using List = std::vector<Node>;
 
-class List {}; // (a b c) (a) (a (b c (d e)))
+using Node_ = std::variant<Atom, List>;
+
+using Program = std::vector<Node>;
+
+struct Node : public Node_ {
+	using Node_::Node_;
+};
 
 // TODO 1: Use std::variant and avoid virtual dispatch
 // TODO 2: Node should be a struct with its own `LispToken` embedded
+
+// type 'a List = Nil | Cons of ('a * List)
+
+#endif

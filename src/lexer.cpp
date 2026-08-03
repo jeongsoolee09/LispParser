@@ -3,12 +3,13 @@
 #include <cctype>
 #include <cstddef>
 #include <glog/logging.h>
+#include <stdexcept>
 #include <unordered_map>
 
 namespace {
 
-const int INITIAL_LINE = 1;
-const int INITIAL_COLUMN = 1;
+const std::size_t INITIAL_LINE = 1;
+const std::size_t INITIAL_COLUMN = 1;
 
 bool is_whitespace(char character) {
   return character == ' ' || character == '\n' || character == '\t';
@@ -33,28 +34,24 @@ bool is_keyword_symbol(std::string_view symbol) {
   return keyword_table.find(symbol) != keyword_table.cend();
 }
 
-Symbol construct_symbol(std::string_view token_value) {
-	// TODO
-}
-
 } // namespace
 
 std::vector<LispToken> lex(std::string_view source) {
   std::vector<LispToken> result;
-  int current_line = 1;
-  int current_column = 1;
+  std::size_t current_line = 1;
+  std::size_t current_column = 1;
   auto it = source.cbegin();
   for (; it != source.cend(); it++) {
     char character = *it;
     switch (character) {
     case '(':
-      result.emplace_back(LParen(current_line, current_column, current_line,
-                                 current_column + 1));
+      result.emplace_back(LParen(Range{current_line, current_column,
+                                       current_line, current_column + 1}));
       current_column += 1;
       break;
     case ')':
-      result.emplace_back(RParen(current_line, current_column, current_line,
-                                 current_column + 1));
+      result.emplace_back(RParen(Range{current_line, current_column,
+                                       current_line, current_column + 1}));
       current_column += 1;
       break;
     case '"': {
@@ -63,9 +60,9 @@ std::vector<LispToken> lex(std::string_view source) {
           it, source.cend(), [](char character) { return character == '"'; });
       std::ptrdiff_t distance = std::distance(it, occurrence);
       std::string token_value(&*it, distance);
-      result.emplace_back(StringLiteral(token_value, current_line,
-                                        current_column, current_line,
-                                        current_column + distance + 1));
+      result.emplace_back(StringLiteral(
+          token_value, Range{current_line, current_column, current_line,
+                             std::size_t(current_column + distance + 1)}));
       it += distance;
       break;
     }
@@ -84,15 +81,12 @@ std::vector<LispToken> lex(std::string_view source) {
       std::ptrdiff_t adjusted_distance = std::max<std::ptrdiff_t>(1, distance);
       std::string token_value(&*it, adjusted_distance);
       /* Check if it's a keyword by looking it up on the table */
-      if (is_keyword_symbol(token_value)) {
-        result.emplace_back(KeywordSymbol(
-            from_string(token_value).value(), current_line, current_column,
-            current_line, current_column + adjusted_distance));
-      } else {
-        result.emplace_back(UserSymbol(token_value, current_line,
-                                       current_column, current_line,
-                                       current_column + adjusted_distance));
-      }
+      result.emplace_back(
+          /* I can't just do KeywordSymbol(...)... */
+          Symbol::from_string(
+              token_value,
+              Range{current_line, current_column, current_line,
+                    std::size_t{current_column + adjusted_distance}}));
       it += distance - 1;
       break;
     }

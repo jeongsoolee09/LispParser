@@ -42,8 +42,8 @@ std::string to_string(TokenKind token) {
  * `pp`.
  */
 std::optional<TokenKind> from_string(std::string_view keyword_name) {
-  /* TODO: change this to use the Times 33 hash and use that in the switch
-   * statement */
+  /* Make this a character-by-character decision tree, just like the initial
+   * version. */
   if (keyword_name == "quote") {
     return TokenKind::QUOTE;
   } else if (keyword_name == "atom") {

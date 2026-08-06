@@ -92,4 +92,15 @@ TEST_F(LexerTest, StringLiteral) {
       std::vector<LispToken>{ StringLiteral{ "hi", Range{ 1, 1, 1, 5 } } };
   EXPECT_EQ(result, expected_result);
 }
+
+TEST_F(LexerTest, StringLiteralMultiple) {
+  std::vector<LispToken> result = lex("(\"hi\" \"ho\")");
+  auto expected_result =
+      std::vector<LispToken>{ LParen{ Range{ 1, 1, 1, 2 } },
+                              StringLiteral{ "hi", Range{ 1, 2, 1, 6 } },
+                              StringLiteral{ "ho", Range{ 1, 7, 1, 11 } },
+                              RParen{ Range{ 1, 11, 1, 12 } } };
+  EXPECT_EQ(result, expected_result);
+}
+
 } // namespace

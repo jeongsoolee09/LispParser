@@ -60,13 +60,13 @@ std::vector<LispToken> lex(std::string_view source) {
           it, source.cend(), [](char character) { return character == '"'; });
       std::ptrdiff_t distance = std::distance(it, occurrence);
       std::string token_value(&*it, distance);
-      result.emplace_back(
-          StringLiteral(token_value,
-                        Range{ current_line,
-                               current_column,
-                               current_line,
-                               std::size_t(1 + current_column + distance + 1) }));
-      current_column += distance + 1;
+      result.emplace_back(StringLiteral(
+          token_value,
+          Range{ current_line,
+                 current_column,
+                 current_line,
+                 std::size_t(1 + current_column + distance + 1) }));
+      current_column = 1 + current_column + distance + 1;
       it += distance;
       break;
     }

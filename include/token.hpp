@@ -33,6 +33,7 @@ enum class TokenKind {
   /* 3. Delimiters */
   LPAREN,
   RPAREN,
+  Eof,
   WHITESPACE
 };
 
@@ -182,8 +183,8 @@ struct UserSymbol : public TokenSig {
 
   TokenKind get_kind() const { return TokenKind::UserSymbol; }
   std::string to_string() const {
-    return std::format("{}(\"{}\"{})", ::to_string(get_kind()), name,
-                       range.to_string());
+    return std::format(
+        "{}(\"{}\"{})", ::to_string(get_kind()), name, range.to_string());
   }
   std::string pp() const { return name; }
 
@@ -194,13 +195,21 @@ struct UserSymbol : public TokenSig {
 
 struct Symbol;
 
-using KeywordSymbol_ =
-    std::variant<QuoteKeywordSymbol, AtomKeywordSymbol, EqKeywordSymbol,
-                 CarKeywordSymbol, CdrKeywordSymbol, ConsKeywordSymbol,
-                 CondKeywordSymbol>;
+using KeywordSymbol_ = std::variant<QuoteKeywordSymbol,
+                                    AtomKeywordSymbol,
+                                    EqKeywordSymbol,
+                                    CarKeywordSymbol,
+                                    CdrKeywordSymbol,
+                                    ConsKeywordSymbol,
+                                    CondKeywordSymbol>;
 
 struct KeywordSymbol : public KeywordSymbol_ {
   using KeywordSymbol_::KeywordSymbol_;
+
+  TokenKind get_kind() const {
+    return std::visit(
+        [](auto &keyword_symbol) { return keyword_symbol.get_kind(); }, *this);
+  }
 
   std::string to_string() const {
     return std::visit(
@@ -228,6 +237,10 @@ struct Symbol : public Symbol_ {
                       *this);
   }
 
+  TokenKind get_kind() const {
+    return std::visit([](auto &symbol) { return symbol.get_kind(); }, *this);
+  }
+
   static Symbol from_string(std::string_view keyword_name, Range range);
 };
 
@@ -236,25 +249,25 @@ inline Symbol Symbol::from_string(std::string_view keyword_name, Range range) {
   if (token_kind.has_value()) {
     switch (token_kind.value()) {
     case TokenKind::QUOTE:
-      return QuoteKeywordSymbol{range}; // Unambiguously a constructor call,
+      return QuoteKeywordSymbol{ range }; // Unambiguously a constructor call,
     case TokenKind::ATOM:
-      return AtomKeywordSymbol{range};
+      return AtomKeywordSymbol{ range };
     case TokenKind::EQ:
-      return EqKeywordSymbol{range};
+      return EqKeywordSymbol{ range };
     case TokenKind::CAR:
-      return CarKeywordSymbol{range};
+      return CarKeywordSymbol{ range };
     case TokenKind::CDR:
-      return CdrKeywordSymbol{range};
+      return CdrKeywordSymbol{ range };
     case TokenKind::CONS:
-      return ConsKeywordSymbol{range};
+      return ConsKeywordSymbol{ range };
     case TokenKind::COND:
-      return CondKeywordSymbol{range};
+      return CondKeywordSymbol{ range };
     default:
-      throw std::invalid_argument(std::string{"Got unexpected type"} +
-                                  std::string{keyword_name});
+      throw std::invalid_argument(std::string{ "Got unexpected type" } +
+                                  std::string{ keyword_name });
     }
   } else {
-    return UserSymbol{keyword_name, range};
+    return UserSymbol{ keyword_name, range };
   }
 }
 
@@ -299,8 +312,8 @@ struct IntLiteral : public TokenSig {
   bool operator==(const IntLiteral &) const = default;
 
   std::string to_string() const {
-    return std::format("{}({}, {})", ::to_string(get_kind()), value,
-                       range.to_string());
+    return std::format(
+        "{}({}, {})", ::to_string(get_kind()), value, range.to_string());
   }
 
   std::string pp() const { return std::to_string(value); }
@@ -317,8 +330,8 @@ struct StringLiteral : public TokenSig {
   bool operator==(const StringLiteral &) const = default;
 
   std::string to_string() const {
-    return std::format("{}({}, {})", ::to_string(get_kind()), value,
-                       range.to_string());
+    return std::format(
+        "{}({}, {})", ::to_string(get_kind()), value, range.to_string());
   }
 
   std::string pp() const { return value; }
@@ -335,6 +348,10 @@ struct Literal : public Literal_ {
 
   std::string pp() const {
     return std::visit([](auto &literal) { return literal.pp(); }, *this);
+  }
+
+  TokenKind get_kind() const {
+    return std::visit([](auto &literal) { return literal.get_kind(); }, *this);
   }
 };
 /* ==================================================== */
@@ -361,6 +378,18 @@ struct RParen : public TokenSig {
   }
 
   std::string pp() const { return ")"; }
+};
+
+struct Eof : public TokenSig {
+  Eof(Range range) : TokenSig(range) {}
+
+  TokenKind get_kind() const { return TokenKind::Eof; }
+
+  std::string to_string() const {
+    return std::format("{}({})", ::to_string(get_kind()), range.to_string());
+  }
+
+  std::string pp() const { return "EOF"; }
 };
 
 using Delimiter_ = std::variant<LParen, RParen>;
@@ -395,6 +424,16 @@ struct LispToken : public LispToken_ {
 
   std::string pp() const {
     return std::visit([](auto &token) { return token.pp(); }, *this);
+  }
+
+  TokenKind get_kind() const {
+    return std::visit([](auto &token) { return token.get_kind(); }, *this);
+  }
+
+  /* TODO: Expose get_range */
+  const Range &get_range() const {
+    /* TODO: Complete the delegation */
+    return std::visit([](auto &token) { return token.get_range(); }, *this);
   }
 };
 
@@ -468,11 +507,17 @@ std::visit(Value::String, *literal)
 //   return not_a_literal_handler();
 // }
 
-template <typename ReturnType, typename THandler, typename NilHandler,
-          typename IntHandler, typename StringHandler, typename CatchallHandler>
+template <typename ReturnType,
+          typename THandler,
+          typename NilHandler,
+          typename IntHandler,
+          typename StringHandler,
+          typename CatchallHandler>
 struct LiteralVisitor {
-  LiteralVisitor(THandler t_handler, NilHandler nil_handler,
-                 IntHandler int_handler, StringHandler string_handler,
+  LiteralVisitor(THandler t_handler,
+                 NilHandler nil_handler,
+                 IntHandler int_handler,
+                 StringHandler string_handler,
                  CatchallHandler catch_all_handler)
       : t_handler(t_handler), nil_handler(nil_handler),
         int_handler(int_handler), string_handler(string_handler),

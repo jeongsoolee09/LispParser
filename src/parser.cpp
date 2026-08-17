@@ -18,8 +18,6 @@ Atom parse_atom(std::vector<LispToken>::const_iterator &it,
 
 /**
  * If LParen, call (push), if RParen, return (pop).
-
- * a b c) (d e))
  */
 List parse_list(std::vector<LispToken>::const_iterator &it,
                 std::vector<LispToken>::const_iterator end) {
@@ -55,7 +53,6 @@ List parse_list(std::vector<LispToken>::const_iterator &it,
   return result;
 }
 
-// clang-format off
 /*
 
 TODO: Write these and use them in place of low-level machinery:
@@ -86,8 +83,6 @@ bool expect(LispToken current_token, TokenKind expected_token_kind)
 - WORKING 3: Update tests (add some tests for the parser).
 - TODO 4: Grammar-guided fuzzer: type 'a list = nil | cons of 'a * list
  */
-
-// clang-format on
 
 Program parse(std::vector<LispToken> program) {
   std::vector<Node> result;

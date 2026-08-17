@@ -1,3 +1,4 @@
 BinPackArguments: false
 BinPackParameters: false
 Cpp11BracedListStyle: false
+ReflowComments: false
